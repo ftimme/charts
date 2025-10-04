@@ -56,15 +56,22 @@ jobs:
           # Hole aktuellen Stand von main
           git fetch origin main:refs/remotes/origin/main
           
-          # Bewahre .github/workflows aus dem Fork
-          echo "Bewahre Workflow-Dateien aus dem Fork"
+          # KRITISCH: Lösche ALLE Workflow-Dateien aus dem Upstream-Branch
+          # Dies verhindert, dass neue Workflow-Dateien vom Upstream übernommen werden
+          echo "Lösche alle Workflow-Dateien vom Upstream"
+          if [ -d .github/workflows ]; then
+            git rm -rf .github/workflows
+          fi
+          
+          # Kopiere NUR die Workflow-Dateien aus dem Fork
+          echo "Kopiere Workflow-Dateien aus dem Fork"
           git checkout origin/main -- .github/workflows
           
-          # Commit die Änderungen nur wenn es Änderungen gibt
+          # Commit die Änderungen
           git add .github/workflows
-          if ! git diff --staged --quiet; then
-            git commit -m "Preserve workflow files from fork"
-            echo "Workflow-Dateien wurden beibehalten"
+          if ! git diff --cached --quiet 2>/dev/null || ! git diff --staged --quiet 2>/dev/null; then
+            git commit -m "Preserve workflow files from fork (exclude upstream workflows)"
+            echo "Workflow-Dateien wurden aus dem Fork übernommen"
           else
             echo "Keine Änderungen an Workflow-Dateien"
           fi
